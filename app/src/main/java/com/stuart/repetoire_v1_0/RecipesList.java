@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -40,7 +41,6 @@ public class RecipesList extends AppCompatActivity {
                 AlertDialog.Builder adb=new AlertDialog.Builder(RecipesList.this);
                 adb.setTitle("Delete?");
                 adb.setMessage("Are you sure you want to delete " + recipe_name_list.get(position));
-                final int positionToRemove = position;
                 adb.setNegativeButton("Cancel", null);
                 adb.setPositiveButton("Ok", new AlertDialog.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
@@ -69,5 +69,11 @@ public class RecipesList extends AppCompatActivity {
             }
         });
 
+    }
+
+    public void onBackPressed() {
+        Log.d("BACKBUTTON", "Recipe List back Button Pressed");
+        setResult(101);
+        super.onBackPressed();
     }
 }

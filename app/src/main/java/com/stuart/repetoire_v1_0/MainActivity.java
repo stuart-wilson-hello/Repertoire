@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
     List<Recipe> recipe_list = new ArrayList<Recipe>();
     String recipe_file="recipe_file1.txt";
-    List<Integer> excludeList=new ArrayList<Integer>();
+    List<String> all_ingredients=new ArrayList<String>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,15 +61,16 @@ public class MainActivity extends AppCompatActivity {
                             Recipe new_recipe=result.getData().getParcelableExtra("Recipe");
                             writeToFile(new_recipe);
                             recipe_list.add(new_recipe);
+                            addToAllIngredients(new_recipe);
                         } else if(result.getResultCode() == 321) {
                             tv.setClickable(false);
                             tv.setAllCaps(false);
                             tv.setText("Cant add blank link or name");
-                        } else if(result.getResultCode() == 1 || result.getResultCode() == 2) {
+                        } else if(result.getResultCode() == 1 || result.getResultCode() == 2 || result.getResultCode() == 101 ) {
                             if(result.getResultCode() == 1){
                                 recipe_list=(List<Recipe>) result.getData().getSerializableExtra("NewRecipeList");
                             }
-                            else{
+                            else if(result.getResultCode() == 2){
                                 recipe_list.removeAll(recipe_list);
                             }
                             writeFullListToFile(recipe_list);
@@ -93,31 +94,10 @@ public class MainActivity extends AppCompatActivity {
                     tv.setClickable(false);
                 }
                 else{
-                    if(excludeList.size() == recipe_list.size()){
-                        excludeList.removeAll(excludeList);
-                        tv.setAllCaps(true);
-                        tv.setClickable(false);
-                        tv.setText("You're being a picky bitch");
-                    }
-                    else {
-                        Collections.sort(excludeList);
-                        int recipeNumber = selectRecipeNumber(excludeList);
-                        excludeList.add(recipeNumber);
-                        tv.setAllCaps(true);
-                        tv.setText("Here we are: \n\n" + recipe_list.get(recipeNumber).name);
-                        tv.setClickable(true);
-                        tv.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View view) {
-                                String url = recipe_list.get(recipeNumber).link;
-                                if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                                    url = "http://" + url;
-                                }
-                                Intent urlIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                                startActivity(urlIntent);
-                            }
-                        });
-                    }
+                    Intent intent = new Intent(MainActivity.this, ShowRecipe.class);
+                    intent.putExtra("RecipeList", (Serializable) recipe_list);
+                    intent.putExtra("AllIngredients", (Serializable) all_ingredients);
+                    activityResultLaunch.launch(intent);
                 }
             }
         });
@@ -129,6 +109,7 @@ public class MainActivity extends AppCompatActivity {
                 //mStartForResult.launch(new Intent(MainActivity.this, AddRecipe.class));
                 Intent intent = new Intent(MainActivity.this, AddRecipe.class);
                 intent.putExtra("RecipeList", (Serializable) recipe_list);
+                intent.putExtra("AllIngredients", (Serializable) all_ingredients);
                 activityResultLaunch.launch(intent);
             }
         });
@@ -151,11 +132,16 @@ public class MainActivity extends AppCompatActivity {
                 Recipe stored_recipe;
                 while(line != null){
                     String[] line_parts=line.split("\t");
-                    stored_recipe=new Recipe(line_parts[0], line_parts[1]);
+                    List<String> ingredients_array=new ArrayList<String>();
+                    for(int i=2; i<line_parts.length;i++){
+                        ingredients_array.add(line_parts[i]);
+                    }
+                    stored_recipe=new Recipe(line_parts[0], line_parts[1], ingredients_array);
                     recipe_list.add(stored_recipe);
                     line = reader.readLine();
                 }
                 fis.close();
+                setAllIngredients();
                 return "Got something!";
             } catch (FileNotFoundException e) {
                 return "File not found! "+getFilesDir().getAbsolutePath()+"/"+recipe_file +" "+file.getAbsolutePath();
@@ -171,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
     private void writeToFile(Recipe recipe) {
         try {
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(openFileOutput(recipe_file, Context.MODE_APPEND));
-            outputStreamWriter.write(recipe.name+"\t"+recipe.link+"\n");
+            outputStreamWriter.write(recipe.name+"\t"+recipe.link+"\t"+recipe.ingredientsString+"\n");
             outputStreamWriter.close();
         }
         catch (IOException e) {
@@ -182,34 +168,34 @@ public class MainActivity extends AppCompatActivity {
         try {
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(openFileOutput(recipe_file, Context.MODE_PRIVATE));
             for(int i=0;i<recipes.size();i++) {
-                outputStreamWriter.write(recipes.get(i).name + "\t" + recipes.get(i).link + "\n");
+                outputStreamWriter.write(recipes.get(i).name + "\t" + recipes.get(i).link + "\t"+recipes.get(i).ingredientsString+"\n");
             }
             outputStreamWriter.close();
+            all_ingredients.clear();
+            setAllIngredients();
         }
         catch (IOException e) {
         }
     }
 
-    private int selectRecipeNumber(List<Integer> excludeList)
-    {
-        Random rd =new Random();
-        if(recipe_list.size() < 5){
-            int temp = rd.nextInt(recipe_list.size());
-            return temp;
-        }
-        else{
-            int temp = rd.nextInt(recipe_list.size()-excludeList.size());
-            for(int i=0;i<excludeList.size();i++){
-                if(excludeList.get(i)>temp){
-                    break;
-                }
-                else{
-                    temp++;
+    private void setAllIngredients() {
+        for(int i=0;i<recipe_list.size();i++)
+        {
+            for(int j=0;j<recipe_list.get(i).ingredients.size();j++){
+                if(!all_ingredients.contains(recipe_list.get(i).ingredients.get(j))) {
+                    all_ingredients.add(recipe_list.get(i).ingredients.get(j));
                 }
             }
-            return temp;
         }
+    }
 
+    private void addToAllIngredients(Recipe r)
+    {
+        for(int i=0;i<r.ingredients.size();i++){
+            if(!all_ingredients.contains(r.ingredients.get(i))) {
+                all_ingredients.add(r.ingredients.get(i));
+            }
+        }
     }
 
 

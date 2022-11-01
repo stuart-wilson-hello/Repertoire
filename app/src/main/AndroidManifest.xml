@@ -15,6 +15,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Repetoire_v1_0">
         <activity
+            android:name=".ShowRecipe"
+            android:label="ShowRecipe"
+            android:theme="@style/Theme.Repetoire_v1_0.NoActionBar" />
+        <activity
             android:name=".RecipesList"
             android:label="RecipesList"
             android:theme="@style/Theme.Repetoire_v1_0.NoActionBar" />

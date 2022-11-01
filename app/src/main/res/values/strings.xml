@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Repetoire_v1_0</string>
+    <string name="app_name">Repetoire</string>
     <string name="title_activity_add_recipe">AddRecipe</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">First Fragment</string>

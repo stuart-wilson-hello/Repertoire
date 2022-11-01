@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".ShowRecipe">
 
     <RelativeLayout
         android:id="@+id/layout1"
@@ -13,38 +13,49 @@
         android:paddingLeft="16dp"
         android:paddingBottom="50dp"
         android:paddingRight="16dp"
-        android:paddingTop="100dp">
-
-        <ImageView
-            android:id="@+id/mainimage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@mipmap/ic_new_launcher_round"
-            android:layout_centerHorizontal="true"/>
-
+        android:paddingTop="50dp">
+        <GridView
+            android:id="@+id/excludeingredients"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:textSize="4dp"
+            android:numColumns="4"
+            android:horizontalSpacing="10dp"
+            android:verticalSpacing="10dp" />
         <TextView
-            android:id="@+id/recipetext"
+            android:id="@+id/recipename"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="25dp"
+            android:layout_below="@id/excludeingredients"
+            android:gravity="center"
+            android:text="Your Recipe"
+            android:textStyle="bold"
+            app:textAllCaps="true"
+            android:background="@layout/border_background"/>
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:gravity="center"
-            android:text="Hello, This is your Repotoire"
-            android:textStyle="bold"
-            android:layout_below="@+id/mainimage"
-            android:layout_above="@+id/mainlinearlayout"
-            app:textAllCaps="false" />
-        <LinearLayout android:id="@+id/mainlinearlayout"
+            android:layout_above="@+id/showrecipebuttonlayout"
+            android:layout_below="@+id/recipename">
+            <ListView
+                android:id="@+id/recipeingredientlist"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/showrecipebuttonlayout"
             android:layout_width="match_parent"
             android:layout_height="100dp"
             android:orientation="horizontal"
             android:layout_alignParentBottom="true">
-            <Button android:id="@+id/randombutton"
+            <Button android:id="@+id/randombutton_showrecipe"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:layout_alignParentStart="true"
                 android:layout_alignParentLeft="true"
                 android:text="Random Recipe" />
-            <Button android:id="@+id/addbutton"
+            <Button android:id="@+id/addbutton_showrecipe"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
