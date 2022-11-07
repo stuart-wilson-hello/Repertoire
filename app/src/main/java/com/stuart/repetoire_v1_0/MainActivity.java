@@ -40,7 +40,9 @@ import java.util.stream.*;
 public class MainActivity extends AppCompatActivity {
 
     List<Recipe> recipe_list = new ArrayList<Recipe>();
+    List<Recipe> menu_recipe_list = new ArrayList<Recipe>();
     String recipe_file="recipe_file1.txt";
+    String menu_file="menu_file1.txt";
     List<String> all_ingredients=new ArrayList<String>();
 
     @Override
@@ -49,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         TextView tv = (TextView) findViewById(R.id.recipetext);
         String debug=getRecipeList();
+        debug=getMenuRecipeList();
         ActivityResultLauncher<Intent> activityResultLaunch = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 new ActivityResultCallback<ActivityResult>() {
@@ -66,6 +69,12 @@ public class MainActivity extends AppCompatActivity {
                             tv.setClickable(false);
                             tv.setAllCaps(false);
                             tv.setText("Cant add blank link or name");
+                        } else if(result.getResultCode()==5) {
+                            tv.setClickable(false);
+                            tv.setAllCaps(false);
+                            tv.setText("Welcome to Repetoire");
+                            menu_recipe_list=(List<Recipe>) result.getData().getSerializableExtra("UpdatedMenu");
+                            writeFullListToFile(menu_recipe_list, menu_file);
                         } else if(result.getResultCode() == 1 || result.getResultCode() == 2 || result.getResultCode() == 101 ) {
                             if(result.getResultCode() == 1){
                                 recipe_list=(List<Recipe>) result.getData().getSerializableExtra("NewRecipeList");
@@ -97,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
                     Intent intent = new Intent(MainActivity.this, ShowRecipe.class);
                     intent.putExtra("RecipeList", (Serializable) recipe_list);
                     intent.putExtra("AllIngredients", (Serializable) all_ingredients);
+                    intent.putExtra("MenuRecipes", (Serializable) menu_recipe_list);
                     activityResultLaunch.launch(intent);
                 }
             }
@@ -110,6 +120,16 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(MainActivity.this, AddRecipe.class);
                 intent.putExtra("RecipeList", (Serializable) recipe_list);
                 intent.putExtra("AllIngredients", (Serializable) all_ingredients);
+                activityResultLaunch.launch(intent);
+            }
+        });
+
+        Button menubtn =findViewById(R.id.menubutton);
+        menubtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, RecipeMenu.class);
+                intent.putExtra("RecipeMenu", (Serializable) menu_recipe_list);
                 activityResultLaunch.launch(intent);
             }
         });
@@ -154,6 +174,44 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    protected String getMenuRecipeList() {
+        FileInputStream fis = null;
+        File file = new File(getFilesDir().getAbsolutePath()+"//"+menu_file);
+        if (file.exists()) {
+            if(!file.canRead()){
+                return "Its there, but i cant read?";
+            }
+            if(file.isDirectory()){
+                return "Its a directory?";
+            }
+            try {
+                fis = new FileInputStream(file.getAbsoluteFile());
+                BufferedReader reader = new BufferedReader(new InputStreamReader(fis));
+                String line = reader.readLine();
+                Recipe stored_recipe;
+                while(line != null){
+                    String[] line_parts=line.split("\t");
+                    List<String> ingredients_array=new ArrayList<String>();
+                    for(int i=2; i<line_parts.length;i++){
+                        ingredients_array.add(line_parts[i]);
+                    }
+                    stored_recipe=new Recipe(line_parts[0], line_parts[1], ingredients_array);
+                    menu_recipe_list.add(stored_recipe);
+                    line = reader.readLine();
+                }
+                fis.close();
+                return "Got something!";
+            } catch (FileNotFoundException e) {
+                return "File not found! "+getFilesDir().getAbsolutePath()+"/"+recipe_file +" "+file.getAbsolutePath();
+            } catch (IOException e) {
+                return "Other exception!";
+            }
+        }
+        else {
+            return "not sure whatll happen "+file.getAbsolutePath();
+        }
+    }
+
     private void writeToFile(Recipe recipe) {
         try {
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(openFileOutput(recipe_file, Context.MODE_APPEND));
@@ -173,6 +231,18 @@ public class MainActivity extends AppCompatActivity {
             outputStreamWriter.close();
             all_ingredients.clear();
             setAllIngredients();
+        }
+        catch (IOException e) {
+        }
+    }
+
+    private void writeFullListToFile(List<Recipe> recipes, String file) {
+        try {
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(openFileOutput(file, Context.MODE_PRIVATE));
+            for(int i=0;i<recipes.size();i++) {
+                outputStreamWriter.write(recipes.get(i).name + "\t" + recipes.get(i).link + "\t"+recipes.get(i).ingredientsString+"\n");
+            }
+            outputStreamWriter.close();
         }
         catch (IOException e) {
         }

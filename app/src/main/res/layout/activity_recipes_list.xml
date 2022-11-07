@@ -28,7 +28,7 @@
     <LinearLayout
         android:id="@+id/activity_recipe_list_button_view"
         android:layout_width="match_parent"
-        android:layout_height="100dp"
+        android:layout_height="50dp"
         android:layout_alignParentBottom="true"
         android:orientation="horizontal">
         <Button android:id="@+id/donebutton"

@@ -25,6 +25,7 @@ import android.widget.Button;
 import android.widget.GridView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -33,21 +34,27 @@ import java.util.List;
 import java.util.Random;
 
 public class ShowRecipe extends AppCompatActivity {
+    Intent intent;
 
     List<Recipe> recipe_list = new ArrayList<Recipe>();
+    List<Recipe> recipes_in_menu = new ArrayList<Recipe>();
     RecipeSelecter selecter=new RecipeSelecter();
     List<String> excluded_recipes=new ArrayList<String>();
+    List<String> excluded_ingedient_list= new ArrayList<String>();
+    Recipe currentDisplayedRecipe;
+    List<String> ingedientDisplaylist=new ArrayList<String>();;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_recipe);
-
+        intent = new Intent(ShowRecipe.this, MainActivity.class);
         ActivityResultLauncher<Intent> activityResultLaunch = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 new ActivityResultCallback<ActivityResult>() {
                     @Override
                     public void onActivityResult(ActivityResult result) {
-                        Intent intent = new Intent(ShowRecipe.this, MainActivity.class);
+
                         if(result.getResultCode()==101){
 
                         }
@@ -75,8 +82,11 @@ public class ShowRecipe extends AppCompatActivity {
 
         Intent in = getIntent();
         List<String> all_ingredients= (List<String>) in.getSerializableExtra("AllIngredients");
+        recipe_list = (List<Recipe>) in.getSerializableExtra("RecipeList");
+        recipes_in_menu = (List<Recipe>) in.getSerializableExtra("MenuRecipes");
+
         GridView excludedIngredientsView=(GridView) findViewById(R.id.excludeingredients);
-        List<String> excluded_ingedient_list=new ArrayList<String>();
+        excluded_ingedient_list=new ArrayList<String>();
         ArrayAdapter<String> exclude_arr;
         exclude_arr=new ArrayAdapter<String>(this, R.layout.excluded_ingredients_layout, excluded_ingedient_list);
         excludedIngredientsView.setAdapter(exclude_arr);
@@ -88,16 +98,19 @@ public class ShowRecipe extends AppCompatActivity {
             }
         });
 
-        recipe_list = (List<Recipe>) in.getSerializableExtra("RecipeList");
-        Recipe current_recipe=selecter.selectRecipe(recipe_list,excluded_recipes,excluded_ingedient_list);
-        excluded_recipes.add(current_recipe.name);
         TextView tv = (TextView) findViewById(R.id.recipename);
-        tv.setText("\n"+current_recipe.name+"\n");
-        tv.setClickable(true);
+        ListView l = findViewById(R.id.recipeingredientlist);
+        Button btn =findViewById(R.id.randombutton_showrecipe);
+        Button addToMenuBtn=findViewById(R.id.addtomenu_showrecipe);
+        Button recipebtn=findViewById(R.id.back_showrecipe);
+        //From Here
+        updateCurrentRecipe();
+        tv.setText("\n"+currentDisplayedRecipe.name+"\n"); //Leave
+        tv.setClickable(true); //Leave
         tv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String url = current_recipe.link;
+                String url = currentDisplayedRecipe.link;
                 if (!url.startsWith("http://") && !url.startsWith("https://")) {
                     url = "http://" + url;
                 }
@@ -106,55 +119,39 @@ public class ShowRecipe extends AppCompatActivity {
             }
         });
 
-
-        ListView l = findViewById(R.id.recipeingredientlist);
-        List<String> ingedient_list= new ArrayList<String>();
-        ingedient_list.addAll(current_recipe.ingredients);
-        ArrayAdapter<String> arr;
-        arr = new ArrayAdapter<String>(this, R.layout.support_simple_spinner_dropdown_item, ingedient_list);
+        ArrayAdapter<String> arr; //Leave
+        arr = new ArrayAdapter<String>(this, R.layout.support_simple_spinner_dropdown_item, ingedientDisplaylist); //Leave (update)
         l.setAdapter(arr);
 
         l.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> a, View v, int position, long id) {
-                if(!excluded_ingedient_list.contains(ingedient_list.get(position))) {
-                    excluded_ingedient_list.add(ingedient_list.get(position));
+                if(!excluded_ingedient_list.contains(ingedientDisplaylist.get(position))) {
+                    excluded_ingedient_list.add(ingedientDisplaylist.get(position));
                     exclude_arr.notifyDataSetChanged();
                 }
             }
         });
 
-
-        Button btn =findViewById(R.id.randombutton_showrecipe);
-
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                updateCurrentRecipe();
 
-                Recipe selectedRecipe=selecter.selectRecipe(recipe_list,excluded_recipes,excluded_ingedient_list);
-
-                if(!selectedRecipe.valid){
-                    excluded_recipes.clear();
+                if(!currentDisplayedRecipe.valid){
                     tv.setAllCaps(true);
                     tv.setClickable(false);
                     tv.setText("\nYou're being a picky bitch\n");
-                    ingedient_list.clear();
                     arr.notifyDataSetChanged();
                 }
                 else {
-                    excluded_recipes.add(selectedRecipe.name);
-
-                    ingedient_list.clear();
-                    for(int i=0;i<selectedRecipe.ingredients.size();i++){
-                        ingedient_list.add(selectedRecipe.ingredients.get(i));
-                    }
                     arr.notifyDataSetChanged();
                     tv.setAllCaps(true);
-                    tv.setText("\n" + selectedRecipe.name+"\n");
+                    tv.setText("\n" + currentDisplayedRecipe.name+"\n");
                     tv.setClickable(true);
                     tv.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
-                            String url = selectedRecipe.link;
+                            String url = currentDisplayedRecipe.link;
                             if (!url.startsWith("http://") && !url.startsWith("https://")) {
                                 url = "http://" + url;
                             }
@@ -166,45 +163,67 @@ public class ShowRecipe extends AppCompatActivity {
             }
         });
 
-        Button recipebtn=findViewById(R.id.addbutton_showrecipe);
+        addToMenuBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(!checkIfRecipeInRecipeList(recipes_in_menu ,currentDisplayedRecipe)){
+                    if(currentDisplayedRecipe.valid) {
+                        recipes_in_menu.add(currentDisplayedRecipe);
+                        recipebtn.setText("Save Menu\nand Back");
+                    }
+                } else {
+                    Toast.makeText(ShowRecipe.this, "Recipe already on Your Menu", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
         recipebtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //mStartForResult.launch(new Intent(MainActivity.this, AddRecipe.class));
-                Intent intent = new Intent(ShowRecipe.this, AddRecipe.class);
-                intent.putExtra("RecipeList", (Serializable) recipe_list);
-                intent.putExtra("AllIngredients", (Serializable) all_ingredients);
-                activityResultLaunch.launch(intent);
+                intent.putExtra("UpdatedMenu",(Serializable) recipes_in_menu);
+                setResult(5,intent);
+                finish();
             }
         });
 
     }
 
-    private int selectRecipeNumber(List<Integer> excludeList)
-    {
-        Random rd =new Random();
-        if(recipe_list.size() < 5){
-            int temp = rd.nextInt(recipe_list.size());
-            return temp;
+    public void updateCurrentRecipe(){
+        currentDisplayedRecipe=selecter.selectRecipe(recipe_list,excluded_recipes,excluded_ingedient_list);
+        ingedientDisplaylist.clear();
+        if(!currentDisplayedRecipe.valid){
+            excluded_recipes.clear();
         }
         else{
-            int temp = rd.nextInt(recipe_list.size()-excludeList.size());
-            for(int i=0;i<excludeList.size();i++){
-                if(excludeList.get(i)>temp){
-                    break;
-                }
-                else{
-                    temp++;
-                }
-            }
-            return temp;
+            ingedientDisplaylist.addAll(currentDisplayedRecipe.ingredients);
+            excluded_recipes.add(currentDisplayedRecipe.name);
         }
-
     }
 
     @Override
     public void onBackPressed() {
-        setResult(101);
+        intent.putExtra("UpdatedMenu",(Serializable) recipes_in_menu);
+        setResult(5,intent);
         super.onBackPressed();
+    }
+
+    private boolean checkIfRecipeInRecipeList(List<Recipe> list, Recipe r)
+    {
+        for (Recipe r1: list) {
+            if(checkRecipeNamesEqual(r1, r)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean checkRecipeNamesEqual(Recipe r1, Recipe r2)
+    {
+        if(r1.name.equals(r2.name)){
+            return true;
+        }
+        else{
+            return false;
+        }
     }
 }
