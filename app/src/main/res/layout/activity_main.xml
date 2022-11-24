@@ -48,23 +48,49 @@
 
         <LinearLayout android:id="@+id/mainlinearlayout"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
+            android:layout_height="70dp"
             android:orientation="horizontal"
             android:layout_alignParentBottom="true">
+            <Button android:id="@+id/recipesearch"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentLeft="true"
+                android:textSize="10dp"
+                android:paddingLeft="2dp"
+                android:paddingRight="2dp"
+                android:text="Recipe\nSearch"/>
             <Button android:id="@+id/menubutton"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:layout_alignParentStart="true"
                 android:layout_alignParentLeft="true"
-                android:text="Your Menu" />
+                android:textSize="10dp"
+                android:paddingLeft="2dp"
+                android:paddingRight="2dp"
+                android:text="Your\n Menu" />
             <Button android:id="@+id/addbutton"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:layout_alignParentRight="true"
                 android:layout_alignParentEnd="true"
-                android:text="Add Recipe" />
+                android:paddingLeft="2dp"
+                android:paddingRight="2dp"
+                android:textSize="10dp"
+                android:text="Add\nRecipe" />
+            <Button android:id="@+id/ReplacementButton"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
+                android:paddingLeft="2dp"
+                android:paddingRight="2dp"
+                android:textSize="9dp"
+                android:text="Ingredient\nReplacement" />
         </LinearLayout>
     </RelativeLayout>
 

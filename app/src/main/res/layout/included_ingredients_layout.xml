@@ -5,7 +5,7 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:layout_centerHorizontal="true"
-    android:background="@layout/strike_through"
+    android:background="@layout/green_curved"
     android:textColor="#FFFFFF"
     android:gravity="center"
     android:textStyle="bold"

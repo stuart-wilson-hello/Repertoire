@@ -43,7 +43,9 @@ public class MainActivity extends AppCompatActivity {
     List<Recipe> menu_recipe_list = new ArrayList<Recipe>();
     String recipe_file="recipe_file1.txt";
     String menu_file="menu_file1.txt";
+    String replacement_file="replacement_file.txt";
     List<String> all_ingredients=new ArrayList<String>();
+    List<ReplacementIngredientItem> replacementIngedients=new ArrayList<ReplacementIngredientItem>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
         TextView tv = (TextView) findViewById(R.id.recipetext);
         String debug=getRecipeList();
         debug=getMenuRecipeList();
+        debug=getReplacementList();
         ActivityResultLauncher<Intent> activityResultLaunch = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 new ActivityResultCallback<ActivityResult>() {
@@ -73,8 +76,14 @@ public class MainActivity extends AppCompatActivity {
                             tv.setClickable(false);
                             tv.setAllCaps(false);
                             tv.setText("Welcome to Repetoire");
-                            menu_recipe_list=(List<Recipe>) result.getData().getSerializableExtra("UpdatedMenu");
+                            menu_recipe_list = (List<Recipe>) result.getData().getSerializableExtra("UpdatedMenu");
                             writeFullListToFile(menu_recipe_list, menu_file);
+                        } else if(result.getResultCode()==505) {
+                            tv.setClickable(false);
+                            tv.setAllCaps(false);
+                            tv.setText("Welcome to Repetoire");
+                            replacementIngedients = (List<ReplacementIngredientItem>) result.getData().getSerializableExtra("UpdatedReplacementIngredients");
+                            writeFullReplacementsToFile(replacementIngedients, replacement_file);
                         } else if(result.getResultCode() == 1 || result.getResultCode() == 2 || result.getResultCode() == 101 ) {
                             if(result.getResultCode() == 1){
                                 recipe_list=(List<Recipe>) result.getData().getSerializableExtra("NewRecipeList");
@@ -107,6 +116,7 @@ public class MainActivity extends AppCompatActivity {
                     intent.putExtra("RecipeList", (Serializable) recipe_list);
                     intent.putExtra("AllIngredients", (Serializable) all_ingredients);
                     intent.putExtra("MenuRecipes", (Serializable) menu_recipe_list);
+                    intent.putExtra("ReplacementIngredients", (Serializable) replacementIngedients);
                     activityResultLaunch.launch(intent);
                 }
             }
@@ -130,6 +140,30 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Intent intent = new Intent(MainActivity.this, RecipeMenu.class);
                 intent.putExtra("RecipeMenu", (Serializable) menu_recipe_list);
+                activityResultLaunch.launch(intent);
+            }
+        });
+
+        Button replacementButton=findViewById(R.id.ReplacementButton);
+        replacementButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, ReplacementIngredientDisplay.class);
+                intent.putExtra("ReplacementIngredient", (Serializable) replacementIngedients);
+                intent.putExtra("AllIngredients", (Serializable) all_ingredients);
+                activityResultLaunch.launch(intent);
+            }
+        });
+
+        Button recipesearchbutton =findViewById(R.id.recipesearch);
+        recipesearchbutton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, RecipeSearch.class);
+                intent.putExtra("RecipeList", (Serializable) recipe_list);
+                intent.putExtra("AllIngredients", (Serializable) all_ingredients);
+                intent.putExtra("MenuRecipes", (Serializable) menu_recipe_list);
+                intent.putExtra("ReplacementIngredients", (Serializable) replacementIngedients);
                 activityResultLaunch.launch(intent);
             }
         });
@@ -245,6 +279,57 @@ public class MainActivity extends AppCompatActivity {
             outputStreamWriter.close();
         }
         catch (IOException e) {
+        }
+    }
+
+    protected String getReplacementList() {
+        FileInputStream fis = null;
+        File file = new File(getFilesDir().getAbsolutePath() + "//" + replacement_file);
+        if (file.exists()) {
+            if (!file.canRead()) {
+                return "Its there, but i cant read?";
+            }
+            if (file.isDirectory()) {
+                return "Its a directory?";
+            }
+            try {
+                fis = new FileInputStream(file.getAbsoluteFile());
+                BufferedReader reader = new BufferedReader(new InputStreamReader(fis));
+                String line = reader.readLine();
+                ReplacementIngredientItem stored_replacement;
+                while(line != null) {
+                    String[] line_parts = line.split("\t");
+                    List<String> ingredients_array = new ArrayList<String>();
+                    for (int i = 1; i < line_parts.length; i++) {
+                        ingredients_array.add(line_parts[i]);
+                    }
+                    stored_replacement=new ReplacementIngredientItem(line_parts[0],ingredients_array);
+                    replacementIngedients.add(stored_replacement);
+                    line = reader.readLine();
+                }
+                fis.close();
+                return "Got something!";
+            } catch (FileNotFoundException e) {
+                return "File not found! " + getFilesDir().getAbsolutePath() + "/" + recipe_file + " " + file.getAbsolutePath();
+            } catch (IOException e) {
+                return "Other exception!";
+            }
+        } else {
+            return "not sure whatll happen " + file.getAbsolutePath();
+        }
+
+    }
+
+    private void writeFullReplacementsToFile(List<ReplacementIngredientItem> replacements, String file) {
+        try {
+            OutputStreamWriter outputStreamWriter=new OutputStreamWriter(openFileOutput(file, Context.MODE_PRIVATE));
+            for(int i=0; i<replacements.size();i++){
+                outputStreamWriter.write(replacements.get(i).name+"\t"+replacements.get(i).replacementIngredientsString+"\n");
+            }
+            outputStreamWriter.close();
+        }
+        catch (IOException e){
+
         }
     }
 

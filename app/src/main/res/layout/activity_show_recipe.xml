@@ -58,8 +58,8 @@
             android:layout_height="match_parent"
             android:layout_above="@+id/randombuttonlayout_showrecipe"
             android:layout_below="@+id/recipenamecontainer">
-            <ListView
-                android:id="@+id/recipeingredientlist"
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/vertical_list"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"/>
         </LinearLayout>

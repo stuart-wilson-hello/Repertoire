@@ -14,7 +14,15 @@
         android:roundIcon="@mipmap/ic_new_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Repetoire_v1_0">
-        <activity android:name=".ShoppingList"
+        <activity
+            android:name=".RecipeSearch"
+            android:theme="@style/Theme.Repetoire_v1_0.NoActionBar"
+            android:windowSoftInputMode="stateHidden|adjustPan"/>
+        <activity
+            android:name=".ReplacementIngredientDisplay"
+            android:theme="@style/Theme.Repetoire_v1_0.NoActionBar" />
+        <activity
+            android:name=".ShoppingList"
             android:theme="@style/Theme.Repetoire_v1_0.NoActionBar" />
         <activity android:name=".RecipeMenuDisplay" />
         <activity

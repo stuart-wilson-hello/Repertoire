@@ -7,7 +7,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Recipe implements Parcelable, Serializable {
+public class Recipe implements Parcelable, Serializable, Cloneable {
     String name;
     String link;
     List<String> ingredients;
@@ -86,5 +86,11 @@ public class Recipe implements Parcelable, Serializable {
         this.valid=true;
 
         convertStringToIngredients();
+    }
+
+    @Override
+    protected Recipe clone()
+    {
+        return new Recipe(name, link, ingredients);
     }
 }

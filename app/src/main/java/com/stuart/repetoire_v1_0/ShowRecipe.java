@@ -9,6 +9,9 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -43,6 +46,7 @@ public class ShowRecipe extends AppCompatActivity {
     List<String> excluded_ingedient_list= new ArrayList<String>();
     Recipe currentDisplayedRecipe;
     List<String> ingedientDisplaylist=new ArrayList<String>();;
+    List<ReplacementIngredientItem> replacementIngredientsMap=new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,6 +88,7 @@ public class ShowRecipe extends AppCompatActivity {
         List<String> all_ingredients= (List<String>) in.getSerializableExtra("AllIngredients");
         recipe_list = (List<Recipe>) in.getSerializableExtra("RecipeList");
         recipes_in_menu = (List<Recipe>) in.getSerializableExtra("MenuRecipes");
+        replacementIngredientsMap =(List<ReplacementIngredientItem>) in.getSerializableExtra("ReplacementIngredients");
 
         GridView excludedIngredientsView=(GridView) findViewById(R.id.excludeingredients);
         excluded_ingedient_list=new ArrayList<String>();
@@ -99,7 +104,7 @@ public class ShowRecipe extends AppCompatActivity {
         });
 
         TextView tv = (TextView) findViewById(R.id.recipename);
-        ListView l = findViewById(R.id.recipeingredientlist);
+        RecyclerView l = (RecyclerView) findViewById(R.id.vertical_list);
         Button btn =findViewById(R.id.randombutton_showrecipe);
         Button addToMenuBtn=findViewById(R.id.addtomenu_showrecipe);
         Button recipebtn=findViewById(R.id.back_showrecipe);
@@ -119,32 +124,50 @@ public class ShowRecipe extends AppCompatActivity {
             }
         });
 
-        ArrayAdapter<String> arr; //Leave
-        arr = new ArrayAdapter<String>(this, R.layout.support_simple_spinner_dropdown_item, ingedientDisplaylist); //Leave (update)
-        l.setAdapter(arr);
-
-        l.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            public void onItemClick(AdapterView<?> a, View v, int position, long id) {
-                if(!excluded_ingedient_list.contains(ingedientDisplaylist.get(position))) {
-                    excluded_ingedient_list.add(ingedientDisplaylist.get(position));
+        //2022/11/11 Here
+        LinearLayoutManager manager = new LinearLayoutManager(this);
+        l.setLayoutManager(manager);
+        l.setHasFixedSize(true);
+        l.addItemDecoration(new DividerItemDecoration(l.getContext(), DividerItemDecoration.VERTICAL));
+        ReplaceIngredientsRecyclerAdapter replaceIngredientsRecyclerAdapter=new ReplaceIngredientsRecyclerAdapter(getReplacements(ingedientDisplaylist), new ReplaceIngredientsRecyclerAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(String ingredient) {
+                if(!excluded_ingedient_list.contains(ingredient)) {
+                    excluded_ingedient_list.add(ingredient);
                     exclude_arr.notifyDataSetChanged();
                 }
             }
         });
+        l.setAdapter(replaceIngredientsRecyclerAdapter);
+        //2022/11/11 Middle
+        //ArrayAdapter<String> arr; //Leave
+        //arr = new ArrayAdapter<String>(this, R.layout.support_simple_spinner_dropdown_item, ingedientDisplaylist);
+        //l.setAdapter(arr);
 
+        //l.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        //    public void onItemClick(AdapterView<?> a, View v, int position, long id) {
+        //        if(!excluded_ingedient_list.contains(ingedientDisplaylist.get(position))) {
+        //            excluded_ingedient_list.add(ingedientDisplaylist.get(position));
+        //            exclude_arr.notifyDataSetChanged();
+        //        }
+        //    }
+       // });
+        //2022/11/11 end
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 updateCurrentRecipe();
-
+                l.scrollTo(0,0);
                 if(!currentDisplayedRecipe.valid){
                     tv.setAllCaps(true);
                     tv.setClickable(false);
                     tv.setText("\nYou're being a picky bitch\n");
-                    arr.notifyDataSetChanged();
+                    replaceIngredientsRecyclerAdapter.setData(getReplacements(ingedientDisplaylist));
+                    //replaceIngredientsRecyclerAdapter.notifyDataSetChanged();
                 }
                 else {
-                    arr.notifyDataSetChanged();
+                    replaceIngredientsRecyclerAdapter.setData(getReplacements(ingedientDisplaylist));
+                    //replaceIngredientsRecyclerAdapter.notifyDataSetChanged();
                     tv.setAllCaps(true);
                     tv.setText("\n" + currentDisplayedRecipe.name+"\n");
                     tv.setClickable(true);
@@ -225,5 +248,22 @@ public class ShowRecipe extends AppCompatActivity {
         else{
             return false;
         }
+    }
+
+    private List<List<String>> getReplacements(List<String> ingredients)
+    {
+        List<List<String>> newIngredientList= new ArrayList<>();
+        for(int i=0; i<ingredients.size(); i++){
+            List<String> replaceIngredients = new ArrayList<>();
+            replaceIngredients.add(ingredients.get(i));
+
+            for(int j=0; j<replacementIngredientsMap.size(); j++){
+                if(ingredients.get(i).equals(replacementIngredientsMap.get(j).name)){
+                    replaceIngredients.addAll(replacementIngredientsMap.get(j).replacementIngredients);
+                }
+            }
+            newIngredientList.add(replaceIngredients);
+        }
+        return newIngredientList;
     }
 }
